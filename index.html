@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>הרשמה ליום ראיונות</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f6f9; --card: #fff; --text: #1c2433; --muted: #5d6879; --line: #e2e6ec;
+      --brand: #1f5fd1; --brand-soft: #e8effc; --ok: #17713a; --bad: #b42318; --bad-bg: #fde8e6;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); }
+    body { font-family: Heebo, Arial, sans-serif; font-size: 16px; line-height: 1.55; }
+    .wrap { max-width: 560px; margin: 0 auto; padding: 20px 16px 48px; }
+    h1 { font-size: 1.6rem; margin: 0 0 4px; }
+    h2 { font-size: 1.15rem; margin: 0 0 12px; }
+    .hero { text-align: center; margin: 12px 0 20px; }
+    .hero p { margin: 0; color: var(--muted); }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .muted { color: var(--muted); }
+    .small { font-size: .85rem; }
+    .center { text-align: center; }
+    [hidden] { display: none !important; }
+    label { display: block; font-weight: 500; margin-bottom: 14px; }
+    input {
+      display: block; width: 100%; margin-top: 6px; padding: 11px 12px; font: inherit;
+      border: 1px solid #cfd5de; border-radius: 9px; background: #fff; color: inherit;
+    }
+    input:focus { outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand); }
+    input[dir="ltr"] { text-align: right; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } }
+    fieldset { border: 0; padding: 0; margin: 0 0 18px; }
+    legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+    .options { display: grid; gap: 8px; }
+    .option { display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 14px; font-weight: 500; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+    .option input { width: auto; margin: 0; accent-color: var(--brand); }
+    .option:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px;
+      font: inherit; font-weight: 500; border-radius: 9px; cursor: pointer; border: 1px solid #cfd5de;
+      background: #fff; color: var(--text); text-decoration: none;
+    }
+    .btn:disabled { opacity: .55; cursor: default; }
+    .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+    .btn.sm { padding: 6px 10px; font-size: .88rem; }
+    .btn.block { width: 100%; }
+    .btns { display: flex; flex-direction: column; gap: 8px; }
+    .error { background: var(--bad-bg); color: var(--bad); padding: 10px 12px; border-radius: 9px; margin: 0 0 14px; }
+    .notice { background: var(--brand-soft); padding: 12px 14px; border-radius: 9px; }
+    .big-icon { font-size: 2.6rem; line-height: 1; margin-bottom: 8px; }
+    .message { white-space: pre-line; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 8px 0 12px; overflow-wrap: anywhere; }
+    .message a, .card a:not(.btn) { color: var(--brand); }
+    hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0; }
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #c9d2e0; border-top-color: var(--brand); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <header class="hero">
+    <h1 id="org">&nbsp;</h1>
+    <p id="subtitle">הרשמה ליום ראיונות</p>
+  </header>
+  <section class="card" id="view">
+    <p class="muted center"><span class="spinner"></span> טוען…</p>
+  </section>
+</main>
+
+<script>
+  // כתובת המערכת ב-Google (אפליקציית האינטרנט, מסתיימת ב-/exec)
+  var API = 'https://script.google.com/macros/s/AKfycbwaOeXPLF4f0KUjlYt2UCQg-CU3iicC7sUoAs7nrvSgvQcR9S2VfIcaB4pA0WxSnX55Cg/exec';
+
+  var params = new URLSearchParams(location.search);
+  var $ = function (id) { return document.getElementById(id); };
+  var INFO = { orgName: '', contactPhone: '' };
+
+  // בלי כותרת Content-Type הבקשה "פשוטה", ולכן עוברת בין דומיינים בלי בדיקה מקדימה
+  function api(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return fetch(API, { method: 'POST', body: JSON.stringify({ fn: fn, args: args }) })
+      .then(function (r) {
+        if (!r.ok) throw new Error('השרת לא זמין כרגע. נסו שוב בעוד רגע.');
+        return r.json();
+      })
+      .then(function (j) { if (!j.ok) throw new Error(j.error); return j.result; });
+  }
+
+  function errText(e) {
+    var m = String((e && e.message) || e).replace(/^(Exception|Error):\s*/, '');
+    return /Failed to fetch|NetworkError|Load failed/i.test(m) ? 'אין חיבור לשרת. בדקו את החיבור לאינטרנט ונסו שוב.' : m;
+  }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+  function linkify(s) { return esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>'); }
+  function view(html) { $('view').innerHTML = html; }
+  function fail(e) { view('<p class="error">' + esc(errText(e)) + '</p><p class="center"><button class="btn" onclick="location.reload()">נסו שוב</button></p>'); }
+
+  function setInfo(info) {
+    INFO = info;
+    $('org').textContent = info.orgName;
+    document.title = $('subtitle').textContent + ' – ' + info.orgName;
+  }
+  function contactLine() {
+    return INFO.contactPhone ? '<p class="muted small center">לשאלות: <a href="tel:' + esc(INFO.contactPhone) + '">' + esc(INFO.contactPhone) + '</a></p>' : '';
+  }
+
+  /* ───────────── הרשמה ───────────── */
+
+  function startRegister() {
+    Promise.all([api('publicInfo'), api('getOpenDays')])
+      .then(function (r) { setInfo(r[0]); renderForm(r[1]); })
+      .catch(fail);
+  }
+
+  function renderForm(days, keepDayId, error, values) {
+    if (!days.length) {
+      view('<p class="notice center">כרגע אין ימי ראיונות פתוחים להרשמה.<br>נשמח אם תנסו שוב בקרוב או תצרו איתנו קשר.</p>' + contactLine());
+      return;
+    }
+    var v = values || {};
+    view(
+      '<form id="form" novalidate>' +
+      '<fieldset><legend>באיזה יום תגיעו?</legend><div class="options">' +
+      days.map(function (d) {
+        var checked = d.id === keepDayId || days.length === 1;
+        return '<label class="option"><input type="radio" name="dayId" value="' + esc(d.id) + '"' + (checked ? ' checked' : '') + '> ' + esc(d.label) + '</label>';
+      }).join('') + '</div></fieldset>' +
+      '<div class="grid2">' +
+      '<label>שם פרטי<input name="firstName" required autocomplete="given-name" value="' + esc(v.firstName) + '"></label>' +
+      '<label>שם משפחה<input name="lastName" required autocomplete="family-name" value="' + esc(v.lastName) + '"></label>' +
+      '</div>' +
+      '<label>טלפון נייד<input name="phone" type="tel" inputmode="tel" required dir="ltr" placeholder="050-0000000" autocomplete="tel" value="' + esc(v.phone) + '"></label>' +
+      '<label>מייל <span class="muted small">(לא חובה – נשלח אליו את פרטי הראיון)</span><input name="email" type="email" dir="ltr" autocomplete="email" value="' + esc(v.email) + '"></label>' +
+      (error ? '<p class="error">' + esc(error) + '</p>' : '') +
+      '<button class="btn primary block" id="submit" type="submit">הרשמה</button>' +
+      '</form>');
+    $('form').addEventListener('submit', submit);
+  }
+
+  function showFormError(text) {
+    var old = document.querySelector('#form .error');
+    if (old) old.remove();
+    $('submit').insertAdjacentHTML('beforebegin', '<p class="error">' + esc(text) + '</p>');
+  }
+
+  function submit(ev) {
+    ev.preventDefault();
+    var f = ev.target;
+    var day = f.querySelector('input[name="dayId"]:checked');
+    var data = {
+      dayId: day ? day.value : '',
+      firstName: f.firstName.value, lastName: f.lastName.value,
+      phone: f.phone.value, email: f.email.value,
+    };
+    if (!day) return showFormError('נא לבחור יום');
+    if (!data.firstName.trim() || !data.lastName.trim()) return showFormError('נא למלא שם פרטי ושם משפחה');
+    if (data.phone.replace(/\D/g, '').length < 9) return showFormError('נא למלא מספר טלפון נייד');
+    if (data.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) return showFormError('כתובת המייל אינה תקינה (או להשאיר ריק)');
+
+    $('submit').disabled = true;
+    $('submit').innerHTML = '<span class="spinner"></span> שולח…';
+    api('register', data)
+      .then(function (res) {
+        view(
+          '<div class="center"><div class="big-icon">🎉</div>' +
+          '<h2>נרשמת בהצלחה, ' + esc(res.firstName) + '!</h2>' +
+          (res.emailed ? '<p class="muted small">הפרטים נשלחו גם למייל שלך, עם זימון ליומן.</p>' : '') +
+          '<p><a class="btn primary" target="_blank" rel="noopener" href="' + esc(res.calUrl) + '">📅 הוספה ליומן Google</a></p></div>' +
+          '<div class="message">' + linkify(res.text) + '</div>' +
+          '<p class="muted small center">מומלץ לצלם את המסך או לשמור את הפרטים.</p>');
+        window.scrollTo(0, 0);
+      })
+      .catch(function (e) {
+        // רענון רשימת הימים (אולי היום שנבחר התמלא) בלי לאבד את מה שהוקלד
+        api('getOpenDays')
+          .then(function (days) { renderForm(days, data.dayId, errText(e), data); })
+          .catch(function () { renderForm([{ id: data.dayId, label: day.parentNode.textContent.trim() }], data.dayId, errText(e), data); });
+      });
+  }
+
+  /* ───────────── אישור הגעה / ביטול / מעבר יום ───────────── */
+
+  var R = null, mode = 'main', lastError = '';
+
+  function startRespond(token) {
+    $('subtitle').textContent = 'יום ראיונות';
+    Promise.all([api('publicInfo'), api('getRegistration', token)])
+      .then(function (r) { setInfo(r[0]); R = r[1]; renderRespond(); })
+      .catch(fail);
+  }
+
+  function act(action, dayId, nextMode) {
+    lastError = '';
+    document.querySelectorAll('#view button').forEach(function (b) { b.disabled = true; });
+    api('respond', params.get('t'), action, dayId || '')
+      .then(function (r) { R = r; mode = nextMode; renderRespond(); window.scrollTo(0, 0); })
+      .catch(function (e) {
+        lastError = errText(e);
+        api('getRegistration', params.get('t')).then(function (r) { R = r; renderRespond(); }).catch(fail);
+      });
+  }
+
+  function moveDay() {
+    var nd = document.querySelector('input[name="nd"]:checked');
+    if (nd) act('move', nd.value, 'moved');
+  }
+
+  function otherDaysBlock(withContact) {
+    if (!R.otherDays.length) {
+      return '<p class="muted">כרגע אין ימי ראיונות פנויים אחרים.</p>' +
+        '<button class="btn primary block" onclick="act(\'contact\', \'\', \'contact\')">חזרו אליי לתיאום</button>';
+    }
+    return '<fieldset><legend>אפשר לעבור ליום אחר:</legend><div class="options">' +
+      R.otherDays.map(function (d, i) {
+        return '<label class="option"><input type="radio" name="nd" value="' + esc(d.id) + '"' + (i === 0 ? ' checked' : '') + '> ' + esc(d.label) + '</label>';
+      }).join('') + '</div></fieldset>' +
+      '<div class="btns">' +
+      '<button class="btn primary" onclick="moveDay()">מעבר ליום שבחרתי</button>' +
+      (withContact ? '<button class="btn" onclick="act(\'contact\', \'\', \'contact\')">אף יום לא מתאים – חזרו אליי</button>' : '') +
+      '</div>';
+  }
+
+  function renderRespond() {
+    var S = R.statuses, h = '';
+    var err = lastError ? '<p class="error">' + esc(lastError) + '</p>' : '';
+    var calBtn = R.calUrl ? '<p class="center"><a class="btn" target="_blank" rel="noopener" href="' + esc(R.calUrl) + '">📅 הוספה ליומן Google</a></p>' : '';
+
+    if (R.isPast) {
+      h = '<p class="center">יום הראיונות הזה כבר עבר. תודה, ' + esc(R.firstName) + '!</p>';
+    } else if (mode === 'cancel') {
+      h = '<h2>חבל שלא תוכל/י להגיע ב' + esc(R.dayLabel) + '</h2>' + err + otherDaysBlock(true) +
+        '<p class="center"><button class="btn sm" onclick="mode=\'main\';renderRespond()">חזרה</button></p>';
+    } else if (mode === 'moved') {
+      h = '<div class="center"><div class="big-icon">📅</div><h2>עברת ליום חדש</h2>' +
+        '<p>נתראה ב' + esc(R.dayLabel) + '. נשלח לך תזכורת לפני.</p></div>' + calBtn;
+    } else if (R.status === S.CONTACT) {
+      h = '<div class="center"><div class="big-icon">📞</div><h2>קיבלנו, ' + esc(R.firstName) + '</h2>' +
+        '<p>ניצור איתך קשר בהקדם לתיאום מועד אחר.</p></div>' + err +
+        (R.otherDays.length ? '<hr>' + otherDaysBlock(false) : '');
+    } else if (R.status === S.CANCELLED) {
+      h = '<p class="center">ההרשמה שלך בוטלה. אם תרצה/י להירשם מחדש, צרו איתנו קשר.</p>';
+    } else if (R.status === S.CONFIRMED) {
+      h = '<div class="center"><div class="big-icon">✅</div><h2>אישרת הגעה, תודה ' + esc(R.firstName) + '!</h2>' +
+        '<p>נתראה ב' + esc(R.dayLabel) + (R.address ? '<br>' + esc(R.address) : '') + '</p></div>' + calBtn + err +
+        '<p class="center"><button class="btn sm" onclick="mode=\'cancel\';renderRespond()">משהו השתנה? לא אוכל להגיע</button></p>';
+    } else {
+      h = '<h2>היי ' + esc(R.firstName) + ',</h2>' +
+        '<p>נרשמת ליום הראיונות ב<strong>' + esc(R.dayLabel) + '</strong>' + (R.address ? ', ' + esc(R.address) : '') + '.</p>' + err +
+        '<div class="btns">' +
+        '<button class="btn ok" onclick="act(\'confirm\', \'\', \'main\')">✅ מאשר/ת הגעה</button>' +
+        '<button class="btn" onclick="mode=\'cancel\';renderRespond()">לא אוכל להגיע</button>' +
+        '</div>';
+    }
+    view(h + contactLine());
+  }
+
+  /* ───────────── הוספה ליומן ───────────── */
+
+  function startCalendar(token) {
+    $('subtitle').textContent = 'הוספה ליומן';
+    api('getRegistration', token)
+      .then(function (r) {
+        if (!r.calUrl) { view('<p class="center">ההרשמה הזו אינה פעילה.</p>'); return; }
+        location.replace(r.calUrl);
+      })
+      .catch(fail);
+  }
+
+  if (params.get('t')) startRespond(params.get('t'));
+  else if (params.get('cal')) startCalendar(params.get('cal'));
+  else startRegister();
+</script>
+</body>
+</html>
