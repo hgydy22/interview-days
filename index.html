@@ -246,7 +246,9 @@
       h = '<p class="center">ההרשמה שלך בוטלה. אם תרצה/י להירשם מחדש, צרו איתנו קשר.</p>';
     } else if (R.status === S.CONFIRMED) {
       h = '<div class="center"><div class="big-icon">✅</div><h2>אישרת הגעה, תודה ' + esc(R.firstName) + '!</h2>' +
-        '<p>נתראה ב' + esc(R.dayLabel) + (R.address ? '<br>' + esc(R.address) : '') + '</p></div>' + calBtn + err +
+        (R.arrivalEmailed ? '<p class="muted small">הפרטים נשלחו גם למייל שלך.</p>' : '') + '</div>' +
+        (R.arrivalText ? '<div class="message">' + linkify(R.arrivalText) + '</div>' : '<p class="center">נתראה ב' + esc(R.dayLabel) + '</p>') +
+        calBtn + err +
         '<p class="center"><button class="btn sm" onclick="mode=\'cancel\';renderRespond()">משהו השתנה? לא אוכל להגיע</button></p>';
     } else {
       h = '<h2>היי ' + esc(R.firstName) + ',</h2>' +
