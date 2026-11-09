@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<!-- נוצר אוטומטית מ-Admin.html על ידי build-public.js – לא לערוך ידנית -->
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <title>ניהול ימי ראיונות</title>
+  <script>
+  (function () {
+    var API = 'https://script.google.com/macros/s/AKfycbwaOeXPLF4f0KUjlYt2UCQg-CU3iicC7sUoAs7nrvSgvQcR9S2VfIcaB4pA0WxSnX55Cg/exec';
+    var h = new URLSearchParams(location.hash.slice(1));
+    var KEY = h.get('k') || '';
+    window.BOOT_PUBLIC = { key: KEY, dayId: h.get('d') || '' };
+    function fix(res) {
+      if (res && typeof res === 'object' && 'printBase' in res) res.printBase = 'print.html#k=' + encodeURIComponent(KEY) + '&d=';
+      return res;
+    }
+    function netError(e) {
+      return /Failed to fetch|NetworkError|Load failed/i.test(e.message) ? new Error('אין חיבור לשרת. בדקו את החיבור לאינטרנט.') : e;
+    }
+    window.google = { script: { get run() {
+      var ok = function () {}, fail = function (e) { console.error(e); };
+      var p = new Proxy({}, { get: function (_, name) {
+        if (name === 'withSuccessHandler') return function (f) { ok = f; return p; };
+        if (name === 'withFailureHandler') return function (f) { fail = f; return p; };
+        return function () {
+          var args = Array.prototype.slice.call(arguments);
+          fetch(API, { method: 'POST', body: JSON.stringify({ fn: name, args: args }) })
+            .then(function (r) { if (!r.ok) throw new Error('השרת לא זמין כרגע. נסו שוב בעוד רגע.'); return r.json(); })
+            .then(function (j) {
+              if (!j.ok) throw new Error(j.error === 'אין הרשאה' ? 'הקישור לדשבורד אינו תקין, או שהמפתח הוחלף.' : j.error);
+              ok(fix(j.result));
+            })
+            .catch(function (e) { fail(netError(e)); });
+        };
+      } });
+      return p;
+    } } };
+  })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f6f9; --card: #fff; --text: #1c2433; --muted: #5d6879; --line: #e2e6ec;
+      --brand: #1f5fd1; --brand-soft: #e8effc;
+      --ok: #17713a; --ok-bg: #e5f4ea; --warn: #8a5a00; --warn-bg: #fff3d4;
+      --bad: #b42318; --bad-bg: #fde8e6; --wa: #1fa855;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); }
+    body { font-family: Heebo, Arial, sans-serif; font-size: 16px; line-height: 1.55; direction: rtl; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 20px 16px 48px; }
+    .wrap.narrow { max-width: 560px; }
+    h1 { font-size: 1.6rem; margin: 0 0 4px; }
+    h2 { font-size: 1.15rem; margin: 0 0 12px; }
+    .hero { text-align: center; margin: 12px 0 20px; }
+    .hero p { margin: 0; color: var(--muted); }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+    .muted { color: var(--muted); }
+    .small { font-size: .85rem; }
+    [hidden] { display: none !important; }
+  
+    label { display: block; font-weight: 500; margin-bottom: 14px; }
+    input, select {
+      display: block; width: 100%; margin-top: 6px; padding: 11px 12px; font: inherit;
+      border: 1px solid #cfd5de; border-radius: 9px; background: #fff; color: inherit;
+    }
+    input:focus, select:focus { outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand); }
+    input[dir="ltr"] { text-align: right; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } }
+    fieldset { border: 0; padding: 0; margin: 0 0 18px; }
+    legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+  
+    .options { display: grid; gap: 8px; }
+    .option {
+      display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 14px; font-weight: 500;
+      border: 1px solid var(--line); border-radius: 10px; cursor: pointer;
+    }
+    .option input { width: auto; margin: 0; accent-color: var(--brand); }
+    .option:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+  
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 16px; font: inherit; font-weight: 500; border-radius: 9px; cursor: pointer;
+      border: 1px solid #cfd5de; background: #fff; color: var(--text); text-decoration: none; white-space: nowrap;
+    }
+    .btn:hover { background: #f1f3f6; }
+    .btn:disabled { opacity: .55; cursor: default; }
+    .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .btn.primary:hover { filter: brightness(1.08); }
+    .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+    .btn.wa { background: var(--wa); border-color: var(--wa); color: #fff; }
+    .btn.wa:hover { filter: brightness(1.06); }
+    .btn.danger { color: var(--bad); }
+    .btn.sm { padding: 6px 10px; font-size: .88rem; }
+    .btn.block { width: 100%; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btns.stack { flex-direction: column; }
+  
+    .error { background: var(--bad-bg); color: var(--bad); padding: 10px 12px; border-radius: 9px; margin: 0 0 14px; }
+    .notice { background: var(--brand-soft); padding: 12px 14px; border-radius: 9px; }
+    .center { text-align: center; }
+    .big-icon { font-size: 2.6rem; line-height: 1; margin-bottom: 8px; }
+  
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .82rem; font-weight: 500; background: #eef0f3; color: var(--muted); white-space: nowrap; }
+    .badge.ok { background: var(--ok-bg); color: var(--ok); }
+    .badge.warn { background: var(--warn-bg); color: var(--warn); }
+    .badge.bad { background: var(--bad-bg); color: var(--bad); }
+    .badge.brand { background: var(--brand-soft); color: var(--brand); }
+  
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #c9d2e0; border-top-color: var(--brand); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  <style>
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 4px 0 18px; }
+    .top h1 { margin: 0; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+    .row label { margin: 0; flex: 1 1 140px; }
+    .row .btn { flex: 0 0 auto; }
+    .linkbox { display: flex; gap: 8px; flex-wrap: wrap; }
+    .linkbox input { flex: 1 1 260px; margin: 0; direction: ltr; text-align: left; font-size: .9rem; }
+    .list { display: grid; gap: 8px; }
+    .item { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+    .item .who { flex: 1 1 200px; }
+    .item .who b { display: block; }
+    .item select { width: auto; margin: 0; padding: 6px 8px; font-size: .9rem; }
+    .day-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+    .day-head h2 { margin: 0 0 6px; }
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+    .cap { display: inline-flex; align-items: center; gap: 6px; font-size: .88rem; color: var(--muted); }
+    .cap input { width: 64px; margin: 0; padding: 5px 8px; }
+    .table-wrap { overflow-x: auto; margin-top: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+    th, td { text-align: right; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    th { color: var(--muted); font-weight: 500; font-size: .85rem; white-space: nowrap; }
+    td select { margin: 0; padding: 6px 8px; min-width: 150px; font-size: .9rem; }
+    td .sent { color: var(--ok); font-size: .85rem; white-space: nowrap; }
+    td a { color: var(--brand); }
+    tr.dim td { color: var(--muted); }
+    .due-mark { outline: 2px solid var(--warn); outline-offset: 1px; }
+    .empty { color: var(--muted); padding: 6px 0; margin: 0; }
+    details > summary { cursor: pointer; font-weight: 700; margin: 10px 0; }
+    /* בטלפון: כל נרשם הוא כרטיס – שם, טלפון ומייל, סטטוס, ושלושת הכפתורים בשורה – בלי גלילה לצד */
+    @media (max-width: 700px) {
+      .table-wrap { overflow: visible; }
+      table, tbody { display: block; }
+      thead { display: none; }
+      tbody tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 8px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+      td { display: block; border: 0; padding: 0; min-width: 0; }
+      td.c-name, td.c-status { grid-column: 1 / -1; }
+      td.c-phone { grid-column: 1 / 2; }
+      td.c-email { grid-column: 2 / -1; overflow-wrap: anywhere; }
+      td.c-status select { width: 100%; min-width: 0; }
+      td.c-msg::before { content: attr(data-label); display: block; font-size: .75rem; color: var(--muted); margin-bottom: 3px; }
+      td.c-msg .btn.wa { width: 100%; padding: 8px 4px; }
+      td.c-msg .sent { white-space: normal; }
+    }
+    #toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #1c2433; color: #fff; padding: 10px 16px; border-radius: 10px; z-index: 9; max-width: calc(100% - 32px); }
+    #toast.bad { background: var(--bad); }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <div class="top">
+    <div>
+      <h1>ניהול ימי ראיונות</h1>
+      <div class="muted" id="org"></div>
+    </div>
+    <div class="btns">
+      <a class="btn" id="sheetLink" target="_blank">גיליון והגדרות</a>
+      <button class="btn" onclick="load()">רענון</button>
+    </div>
+  </div>
+
+  <p id="loading" class="muted"><span class="spinner"></span> טוען…</p>
+
+  <div id="app" hidden>
+    <section class="card">
+      <h2>קישור הרשמה למועמדים</h2>
+      <div class="linkbox">
+        <input id="regUrl" readonly onclick="this.select()">
+        <button class="btn" onclick="copyLink()">העתקה</button>
+        <a class="btn wa" id="inviteBtn" target="_blank">שליחה ב-WhatsApp</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>פתיחת יום ראיונות</h2>
+      <div class="row">
+        <label>תאריך<input type="date" id="newDate"></label>
+        <label>שעת התכנסות<input type="time" id="newTime" value="09:00"></label>
+        <label>מקסימום נרשמים<input type="number" id="newCap" min="1"></label>
+        <button class="btn primary" id="addBtn" onclick="addDay()">פתיחה להרשמה</button>
+      </div>
+    </section>
+
+    <section class="card" id="dueCard">
+      <h2>לשליחה היום</h2>
+      <div id="due" class="list"></div>
+    </section>
+
+    <section class="card" id="attnCard">
+      <h2>ביקשו שנחזור אליהם</h2>
+      <div id="attn" class="list"></div>
+    </section>
+
+    <div id="upcoming"></div>
+
+    <details id="pastWrap">
+      <summary>ימים שעברו</summary>
+      <div id="past"></div>
+    </details>
+  </div>
+</main>
+<div id="toast" hidden></div>
+
+<script>
+  var BOOT = window.BOOT_PUBLIC;
+  var KEY = BOOT.key;
+  var D = null;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function errText(e) { return String((e && e.message) || e).replace(/^(Exception|Error):\s*/, ''); }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+  function attr(s) { return esc(s).replace(/"/g, '&quot;'); }
+
+  // קריאה לפונקציה בשרת; תמיד מחזירה את כל נתוני הדשבורד מחדש
+  function call(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function (resolve, reject) {
+      var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+      r[fn].apply(r, args);
+    });
+  }
+
+  var toastTimer;
+  function toast(text, bad) {
+    var t = $('toast');
+    t.textContent = text; t.className = bad ? 'bad' : ''; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, bad ? 6000 : 2500);
+  }
+
+  function apply(promise, okText) {
+    return promise.then(function (data) { D = data; render(); if (okText) toast(okText); })
+      .catch(function (e) {
+        toast(errText(e), true);
+        if (!D) $('loading').textContent = errText(e);
+        render();
+      });
+  }
+
+  function load() { apply(call('adminData', KEY)); }
+
+  function shortTime(s) {
+    if (!s) return '';
+    var m = /^(\d{4})-(\d{2})-(\d{2})(?: (\d{2}:\d{2}))?/.exec(s);
+    return m ? m[3] + '/' + m[2] + (m[4] ? ' ' + m[4] : '') : s;
+  }
+
+  function untilText(n) {
+    if (n < 0) return 'עבר';
+    if (n === 0) return 'היום';
+    if (n === 1) return 'מחר';
+    return 'בעוד ' + n + ' ימים';
+  }
+
+  function statusBadge(s) {
+    var S = D.statuses;
+    var cls = s === S.CONFIRMED ? 'ok' : s === S.REGISTERED ? 'brand' : s === S.CONTACT ? 'warn' : 'bad';
+    return '<span class="badge ' + cls + '">' + esc(s) + '</span>';
+  }
+
+  /* ───── פעולות ───── */
+
+  function copyLink() {
+    var input = $('regUrl');
+    input.select();
+    var done = function () { toast('הקישור הועתק'); };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(input.value).then(done, function () { document.execCommand('copy'); done(); });
+    } else { document.execCommand('copy'); done(); }
+  }
+
+  function addDay() {
+    var date = $('newDate').value, time = $('newTime').value, cap = $('newCap').value;
+    if (!date || !time) return toast('נא לבחור תאריך ושעה', true);
+    $('addBtn').disabled = true;
+    apply(call('addDay', KEY, date, time, cap), 'היום נפתח להרשמה ונוסף ליומן')
+      .then(function () { $('addBtn').disabled = false; $('newDate').value = ''; });
+  }
+
+  function setOpen(dayId, open) {
+    apply(call('setDayStatus', KEY, dayId, open), open ? 'היום נפתח להרשמה' : 'היום נסגר להרשמה');
+  }
+
+  function setCap(dayId, value) {
+    apply(call('setDayCapacity', KEY, dayId, value), 'המקסימום עודכן');
+  }
+
+  var pendingDelete = null;
+  function delDay(dayId, btn) {
+    if (pendingDelete !== dayId) {
+      pendingDelete = dayId;
+      btn.textContent = 'בטוח? לחיצה נוספת למחיקה';
+      setTimeout(function () { if (pendingDelete === dayId) { pendingDelete = null; render(); } }, 4000);
+      return;
+    }
+    pendingDelete = null;
+    apply(call('deleteDay', KEY, dayId), 'היום נמחק');
+  }
+
+  function setStatus(regId, status) {
+    apply(call('setRegStatus', KEY, regId, status), 'הסטטוס עודכן');
+  }
+
+  function send(regId, which, url) {
+    window.open(url, '_blank');
+    apply(call('markSent', KEY, regId, which));
+  }
+
+  /* ───── תצוגה ───── */
+
+  function findReg(regId) {
+    for (var i = 0; i < D.days.length; i++) {
+      for (var j = 0; j < D.days[i].regs.length; j++) {
+        if (D.days[i].regs[j].id === regId) return D.days[i].regs[j];
+      }
+    }
+    return null;
+  }
+
+  // which: week | day | arrival – תואם לשדות <which>Url ו-<which>SentAt
+  function sendBtn(r, which, label, due) {
+    return '<button class="btn wa sm' + (due ? ' due-mark' : '') + '" onclick="send(\'' + attr(r.id) + '\', \'' + which + '\', findReg(\'' + attr(r.id) + '\').' + which + 'Url)">' + label + '</button>';
+  }
+
+  // כל הכפתורים זמינים תמיד לנרשמים פעילים; המסגרת הכתומה מסמנת את הזמן המומלץ
+  function msgCell(day, r, which, label, due) {
+    var sentAt = r[which + 'SentAt'];
+    var active = (r.status === D.statuses.REGISTERED || r.status === D.statuses.CONFIRMED) && day.until >= 0;
+    var emailNote = which === 'arrival' && r.arrivalEmailAt ? '<div class="sent">✉ נשלח במייל</div>' : '';
+    if (sentAt) {
+      return '<span class="sent">✓ נשלח ' + esc(shortTime(sentAt)) + '</span>' +
+        (active ? ' <button class="btn sm" title="שליחה חוזרת" onclick="send(\'' + attr(r.id) + '\', \'' + which + '\', findReg(\'' + attr(r.id) + '\').' + which + 'Url)">↻</button>' : '') + emailNote;
+    }
+    return (active ? sendBtn(r, which, label, due) : '<span class="muted">—</span>') + emailNote;
+  }
+
+  function statusSelect(r) {
+    return '<select onchange="setStatus(\'' + attr(r.id) + '\', this.value)">' +
+      Object.keys(D.statuses).map(function (k) {
+        var v = D.statuses[k];
+        return '<option' + (v === r.status ? ' selected' : '') + '>' + esc(v) + '</option>';
+      }).join('') + '</select>';
+  }
+
+  function dayCard(day) {
+    var full = day.count >= day.capacity;
+    var open = day.status === 'פתוח';
+    var stateBadge = day.until < 0 ? '<span class="badge">הסתיים</span>'
+      : !open ? '<span class="badge bad">סגור להרשמה</span>'
+      : full ? '<span class="badge warn">מלא</span>'
+      : '<span class="badge ok">פתוח להרשמה</span>';
+
+    var actions = '';
+    if (day.until >= 0) {
+      actions += '<button class="btn sm" onclick="setOpen(\'' + attr(day.id) + '\', ' + !open + ')">' + (open ? 'סגירת הרשמה' : 'פתיחת הרשמה') + '</button>';
+    }
+    actions += '<a class="btn sm" target="_blank" href="' + attr(D.printBase + encodeURIComponent(day.id)) + '">🖨 רשימה להדפסה</a>';
+    if (!day.regs.length) {
+      actions += '<button class="btn sm danger" onclick="delDay(\'' + attr(day.id) + '\', this)">מחיקה</button>';
+    }
+
+    var rows = day.regs.map(function (r) {
+      var active = r.status === D.statuses.REGISTERED || r.status === D.statuses.CONFIRMED;
+      return '<tr' + (active ? '' : ' class="dim"') + '>' +
+        '<td class="c-name"><b>' + esc(r.name) + '</b><div class="muted small">נרשם/ה ' + esc(shortTime(r.createdAt)) + '</div></td>' +
+        '<td class="c-phone" dir="ltr" style="text-align:right"><a href="' + attr(r.chatUrl) + '" target="_blank" title="פתיחת צ\'אט">' + esc(r.phone) + '</a></td>' +
+        '<td class="c-email small">' + esc(r.email) + (r.emailSentAt ? '<div class="sent">✉ אישור הרשמה נשלח</div>' : '') + '</td>' +
+        '<td class="c-status">' + statusSelect(r) + (r.respondedAt ? '<div class="muted small">עדכון ' + esc(shortTime(r.respondedAt)) + '</div>' : '') + '</td>' +
+        '<td class="c-msg" data-label="תזכורת">' + msgCell(day, r, 'week', 'תזכורת', r.weekDue) + '</td>' +
+        '<td class="c-msg" data-label="אישור הגעה">' + msgCell(day, r, 'day', 'אישור הגעה', r.dayDue) + '</td>' +
+        '<td class="c-msg" data-label="פרטי הגעה">' + msgCell(day, r, 'arrival', 'פרטי הגעה', r.arrivalDue) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    return '<section class="card">' +
+      '<div class="day-head"><div>' +
+      '<h2>' + esc(day.label) + '</h2>' +
+      '<div class="badges">' + stateBadge +
+      '<span class="badge brand">' + day.count + ' / ' + day.capacity + ' נרשמים</span>' +
+      '<span class="badge ok">' + day.confirmed + ' אישרו</span>' +
+      (day.until >= 0 ? '<span class="badge">' + untilText(day.until) + '</span>' : '') +
+      '</div></div>' +
+      '<div class="btns">' + actions +
+      (day.until >= 0 ? '<span class="cap">מקסימום <input type="number" min="1" value="' + day.capacity + '" onchange="setCap(\'' + attr(day.id) + '\', this.value)"></span>' : '') +
+      '</div></div>' +
+      (day.regs.length
+        ? '<div class="table-wrap"><table><thead><tr><th>שם</th><th>טלפון</th><th>מייל</th><th>סטטוס</th><th>תזכורת</th><th>אישור הגעה</th><th>פרטי הגעה</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+        : '<p class="empty">עדיין אין נרשמים.</p>') +
+      '</section>';
+  }
+
+  function render() {
+    if (!D) return;
+    $('loading').hidden = true;
+    $('app').hidden = false;
+    $('org').textContent = D.orgName;
+    $('sheetLink').href = D.sheetUrl;
+    $('regUrl').value = D.registerUrl;
+    $('inviteBtn').href = D.inviteUrl;
+    if (!$('newCap').value) $('newCap').value = D.defaultCapacity;
+    $('newDate').min = D.today;
+
+    var upcoming = D.days.filter(function (d) { return d.until >= 0; });
+    var past = D.days.filter(function (d) { return d.until < 0; }).reverse();
+
+    var due = [], attn = [];
+    upcoming.forEach(function (day) {
+      day.regs.forEach(function (r) {
+        if (r.weekDue) due.push({ r: r, day: day, which: 'week', label: 'תזכורת שבוע לפני' });
+        if (r.arrivalDue) due.push({ r: r, day: day, which: 'arrival', label: 'אישר/ה הגעה – פרטי הגעה (אין מייל)' });
+        if (r.dayDue) due.push({ r: r, day: day, which: 'day', label: 'בקשת אישור הגעה (יום לפני)' });
+        if (r.status === D.statuses.CONTACT) attn.push({ r: r, day: day });
+      });
+    });
+
+    $('dueCard').hidden = !due.length;
+    $('due').innerHTML = due.map(function (x) {
+      return '<div class="item"><div class="who"><b>' + esc(x.r.name) + '</b>' +
+        '<span class="muted small">' + esc(x.label) + ' · ' + esc(x.day.label) + '</span></div>' +
+        sendBtn(x.r, x.which, 'שליחה ב-WhatsApp', false) + '</div>';
+    }).join('');
+
+    $('attnCard').hidden = !attn.length;
+    $('attn').innerHTML = attn.map(function (x) {
+      return '<div class="item"><div class="who"><b>' + esc(x.r.name) + '</b>' +
+        '<span class="muted small">היה רשום/ה ל' + esc(x.day.label) + ' · ביקש/ה ' + esc(shortTime(x.r.respondedAt)) + '</span></div>' +
+        '<a class="btn wa sm" target="_blank" href="' + attr(x.r.chatUrl) + '">צ\'אט</a>' +
+        '<a class="btn sm" href="tel:' + attr(x.r.phone) + '">' + esc(x.r.phone) + '</a>' +
+        statusSelect(x.r) + '</div>';
+    }).join('');
+
+    $('upcoming').innerHTML = upcoming.length ? upcoming.map(dayCard).join('')
+      : '<section class="card"><p class="empty">אין ימי ראיונות קרובים. אפשר לפתוח יום חדש למעלה.</p></section>';
+    $('pastWrap').hidden = !past.length;
+    $('past').innerHTML = past.map(dayCard).join('');
+  }
+
+  load();
+</script>
+</body>
+</html>

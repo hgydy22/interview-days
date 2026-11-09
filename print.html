@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<!-- נוצר אוטומטית מ-Print.html על ידי build-public.js – לא לערוך ידנית -->
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <title>רשימת משתתפים</title>
+  <script>
+  (function () {
+    var API = 'https://script.google.com/macros/s/AKfycbwaOeXPLF4f0KUjlYt2UCQg-CU3iicC7sUoAs7nrvSgvQcR9S2VfIcaB4pA0WxSnX55Cg/exec';
+    var h = new URLSearchParams(location.hash.slice(1));
+    var KEY = h.get('k') || '';
+    window.BOOT_PUBLIC = { key: KEY, dayId: h.get('d') || '' };
+    function fix(res) {
+      if (res && typeof res === 'object' && 'printBase' in res) res.printBase = 'print.html#k=' + encodeURIComponent(KEY) + '&d=';
+      return res;
+    }
+    function netError(e) {
+      return /Failed to fetch|NetworkError|Load failed/i.test(e.message) ? new Error('אין חיבור לשרת. בדקו את החיבור לאינטרנט.') : e;
+    }
+    window.google = { script: { get run() {
+      var ok = function () {}, fail = function (e) { console.error(e); };
+      var p = new Proxy({}, { get: function (_, name) {
+        if (name === 'withSuccessHandler') return function (f) { ok = f; return p; };
+        if (name === 'withFailureHandler') return function (f) { fail = f; return p; };
+        return function () {
+          var args = Array.prototype.slice.call(arguments);
+          fetch(API, { method: 'POST', body: JSON.stringify({ fn: name, args: args }) })
+            .then(function (r) { if (!r.ok) throw new Error('השרת לא זמין כרגע. נסו שוב בעוד רגע.'); return r.json(); })
+            .then(function (j) {
+              if (!j.ok) throw new Error(j.error === 'אין הרשאה' ? 'הקישור לדשבורד אינו תקין, או שהמפתח הוחלף.' : j.error);
+              ok(fix(j.result));
+            })
+            .catch(function (e) { fail(netError(e)); });
+        };
+      } });
+      return p;
+    } } };
+  })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f6f9; --card: #fff; --text: #1c2433; --muted: #5d6879; --line: #e2e6ec;
+      --brand: #1f5fd1; --brand-soft: #e8effc;
+      --ok: #17713a; --ok-bg: #e5f4ea; --warn: #8a5a00; --warn-bg: #fff3d4;
+      --bad: #b42318; --bad-bg: #fde8e6; --wa: #1fa855;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); }
+    body { font-family: Heebo, Arial, sans-serif; font-size: 16px; line-height: 1.55; direction: rtl; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 20px 16px 48px; }
+    .wrap.narrow { max-width: 560px; }
+    h1 { font-size: 1.6rem; margin: 0 0 4px; }
+    h2 { font-size: 1.15rem; margin: 0 0 12px; }
+    .hero { text-align: center; margin: 12px 0 20px; }
+    .hero p { margin: 0; color: var(--muted); }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+    .muted { color: var(--muted); }
+    .small { font-size: .85rem; }
+    [hidden] { display: none !important; }
+  
+    label { display: block; font-weight: 500; margin-bottom: 14px; }
+    input, select {
+      display: block; width: 100%; margin-top: 6px; padding: 11px 12px; font: inherit;
+      border: 1px solid #cfd5de; border-radius: 9px; background: #fff; color: inherit;
+    }
+    input:focus, select:focus { outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand); }
+    input[dir="ltr"] { text-align: right; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } }
+    fieldset { border: 0; padding: 0; margin: 0 0 18px; }
+    legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+  
+    .options { display: grid; gap: 8px; }
+    .option {
+      display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 14px; font-weight: 500;
+      border: 1px solid var(--line); border-radius: 10px; cursor: pointer;
+    }
+    .option input { width: auto; margin: 0; accent-color: var(--brand); }
+    .option:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+  
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 16px; font: inherit; font-weight: 500; border-radius: 9px; cursor: pointer;
+      border: 1px solid #cfd5de; background: #fff; color: var(--text); text-decoration: none; white-space: nowrap;
+    }
+    .btn:hover { background: #f1f3f6; }
+    .btn:disabled { opacity: .55; cursor: default; }
+    .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .btn.primary:hover { filter: brightness(1.08); }
+    .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+    .btn.wa { background: var(--wa); border-color: var(--wa); color: #fff; }
+    .btn.wa:hover { filter: brightness(1.06); }
+    .btn.danger { color: var(--bad); }
+    .btn.sm { padding: 6px 10px; font-size: .88rem; }
+    .btn.block { width: 100%; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btns.stack { flex-direction: column; }
+  
+    .error { background: var(--bad-bg); color: var(--bad); padding: 10px 12px; border-radius: 9px; margin: 0 0 14px; }
+    .notice { background: var(--brand-soft); padding: 12px 14px; border-radius: 9px; }
+    .center { text-align: center; }
+    .big-icon { font-size: 2.6rem; line-height: 1; margin-bottom: 8px; }
+  
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .82rem; font-weight: 500; background: #eef0f3; color: var(--muted); white-space: nowrap; }
+    .badge.ok { background: var(--ok-bg); color: var(--ok); }
+    .badge.warn { background: var(--warn-bg); color: var(--warn); }
+    .badge.bad { background: var(--bad-bg); color: var(--bad); }
+    .badge.brand { background: var(--brand-soft); color: var(--brand); }
+  
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #c9d2e0; border-top-color: var(--brand); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  <style>
+    body { background: #fff; }
+    .sheet { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+    .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid #1c2433; padding-bottom: 10px; margin-bottom: 14px; }
+    .head h1 { font-size: 1.4rem; margin: 0; }
+    .head .meta { font-size: .9rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+    th, td { border: 1px solid #9aa3b1; padding: 7px 8px; text-align: right; }
+    th { background: #eef1f5; font-weight: 700; }
+    td.num { width: 32px; text-align: center; color: var(--muted); }
+    td.box { width: 54px; }
+    td.ltr { direction: ltr; text-align: right; white-space: nowrap; }
+    .toolbar { margin-bottom: 16px; }
+    @media print {
+      .toolbar { display: none; }
+      .sheet { padding: 0; max-width: none; }
+      @page { size: A4; margin: 12mm; }
+      th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tr { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="sheet">
+  <div class="toolbar btns">
+    <button class="btn primary" onclick="window.print()">🖨 הדפסה</button>
+  </div>
+  <div id="out"><p class="muted"><span class="spinner"></span> טוען…</p></div>
+</div>
+
+<script>
+  var BOOT = window.BOOT_PUBLIC;
+  function errText(e) { return String((e && e.message) || e).replace(/^(Exception|Error):\s*/, ''); }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+
+  google.script.run
+    .withSuccessHandler(function (d) {
+      var confirmed = d.rows.filter(function (r) { return r.status === d.confirmedStatus; }).length;
+      document.getElementById('out').innerHTML =
+        '<div class="head"><div><div class="meta">' + esc(d.orgName) + '</div>' +
+        '<h1>יום ראיונות – ' + esc(d.label) + '</h1></div>' +
+        '<div class="meta">נרשמים: ' + d.rows.length + ' · אישרו הגעה: ' + confirmed + ' · הופק: ' + esc(d.printedAt) + '</div></div>' +
+        (d.rows.length
+          ? '<table><thead><tr><th>#</th><th>שם משפחה</th><th>שם פרטי</th><th>טלפון</th><th>מייל</th><th>אישר/ה</th><th>הגיע/ה</th></tr></thead><tbody>' +
+            d.rows.map(function (r, i) {
+              return '<tr><td class="num">' + (i + 1) + '</td><td>' + esc(r.lastName) + '</td><td>' + esc(r.firstName) + '</td>' +
+                '<td class="ltr">' + esc(r.phone) + '</td><td class="ltr">' + esc(r.email) + '</td>' +
+                '<td>' + (r.status === d.confirmedStatus ? '✓' : '') + '</td><td class="box"></td></tr>';
+            }).join('') + '</tbody></table>'
+          : '<p>אין נרשמים ליום הזה.</p>');
+    })
+    .withFailureHandler(function (e) {
+      document.getElementById('out').innerHTML = '<p class="error">' + esc(errText(e)) + '</p>';
+    })
+    .printData(BOOT.key, BOOT.dayId);
+</script>
+</body>
+</html>
